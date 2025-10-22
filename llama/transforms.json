@@ -1,0 +1,434 @@
+{
+  "project": "hsbc-10138242-dfeurope-dev/subscriptions/esp-uk-cdm-cud_cust_seg-sub-tagged",
+  "event_name": "nongmdebit",
+  "rules": [
+    {
+      "filters": {
+        "transactionType@nongmdebit": "eventDetails_transactionType == 'DR'",
+        "forwardedIndicator@nongmdebit": "eventDetails_forwardedIndicator == 'N'"
+      },
+      "jointSplit": {
+        "split@nongmdebit": {}
+      },
+      "transforms": [
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_accountCustomer",
+          "output_column": "customerId"
+        },
+        {
+          "transform": "addStaticData",
+          "enrichments": [
+            {
+              "column": "PAYLOAD_UUID",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "transform": "date_format",
+          "column": "eventHeader_systemTimestamp",
+          "format": "YYYY-MM-dd'T'HH:mm:ss.SSSXXXX",
+          "new_format": "YYYY-MM-dd'T'HH:mm:ss.SSSSSSSSS",
+          "local_time_zone": "Europe/London",
+          "time_field": "eventHeader_systemTimestamp",
+          "time_format": "YYYY-MM-dd'T'HH:mm:ss.SSSSSSSSS",
+          "def_timezone": "UTC"
+        },
+        {
+          "transform": "date_format",
+          "column": "eventDetails_systemDateTime",
+          "format": "YYYY-MM-dd'T'HH:mm:ss.00+00",
+          "new_format": "YYYY-MM-dd'T'HH:mm:ss.SSSSSSSSS"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_transactionDatetime",
+          "output_column": "transactionDatetime"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_transactionType",
+          "output_column": "transactionType"
+        },
+        {
+          "transform": "switch_case",
+          "input_column": "eventDetails_retailAccount",
+          "switch": {
+            "1": "eventDetails_transactionAccount"
+          },
+          "output_column": "transactionAccount",
+          "default": "eventDetails_retailAccount"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_accountCustomerSgClass",
+          "output_column": "accountCustomerSgClass"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_transactionCurrency",
+          "output_column": "transactionCurrency"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "eventDetails_transactionAmount",
+          "output_column": "transactionAmount",
+          "output_data_type": "str"
+        },
+        {
+          "transform": "regex_sub",
+          "column": "transactionAmount",
+          "pattern": "(\\.)",
+          "replacement": "\\\\\\1"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_transactionDealCode",
+          "output_column": "transactionDealCode"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_accountProductType",
+          "output_column": "accountProductType"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_forwardedIndicator",
+          "output_column": "forwardedIndicator"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_accountProductType",
+          "output_column": "accountProductType"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_accountCurrency",
+          "output_column": "accountCurrency"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_narrative1",
+          "output_column": "narrative1"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_narrative2",
+          "output_column": "narrative2"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_narrative3",
+          "output_column": "narrative3"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_narrative4",
+          "output_column": "narrative4"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "eventDetails_inputMediumId",
+          "output_column": "inputMediumId",
+          "output_data_type": "str"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_systemCode",
+          "output_column": "systemCode"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "systemCode",
+          "output_column": "systemCode",
+          "output_data_type": "str"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_payeeName",
+          "output_column": "payeeName"
+        },
+        {
+          "transform": "switch_case",
+          "input_column": "payeeName",
+          "switch": {
+            "": "payeeNameMissing"
+          },
+          "output_column": "payeeName"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "eventDetails_sortCode",
+          "output_column": "sortCode",
+          "output_data_type": "str"
+        },
+        {
+          "transform": "multi_column_conditional_operation",
+          "input_columns": [
+            {
+              "column": "eventDetails_transactionCaptureWorkstation"
+            }
+          ],
+          "op": "in",
+          "reference_value": [
+            "ODIY",
+            "SCAN"
+          ],
+          "expression": "0",
+          "output_column": "paymentType",
+          "output_success_value": "Standing Order",
+          "output_failed_value_method": "Direct",
+          "output_failed_value": "Direct"
+        },
+        {
+          "transform": "multi_column_conditional_operation",
+          "input_columns": [
+            {
+              "column": "eventDetails_transactionCaptureWorkstation"
+            }
+          ],
+          "op": "in",
+          "reference_value": [
+            "SDIZ"
+          ],
+          "expression": "0",
+          "output_column": "paymentType",
+          "output_success_value": "Direct Debit",
+          "output_failed_value_method": "Direct",
+          "output_failed_value": "Direct"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventHeader_systemTimestamp",
+          "output_column": "REC_TIMESTAMP"
+        },
+        {
+          "delete_input": true,
+          "transform": "copy_attribute",
+          "input_column": "eventHeader_destination_country",
+          "output_column": "country_code"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "eventDetails_transactionCaptureWorkstation",
+          "output_column": "transactionCaptureWorkstation",
+          "output_data_type": "str"
+        },
+        {
+          "transform": "data_type",
+          "input_column": "eventDetails_transactionDealNumber",
+          "output_column": "transactionDealNumber",
+          "output_data_type": "str"
+        },
+        {
+          "delete_input": false,
+          "transform": "concatenation",
+          "fields": [
+            "eventDetails_transactionCaptureWorkstation",
+            "eventDetails_transactionDealNumber"
+          ],
+          "output_column": "transactionID"
+        },
+        {
+          "transform": "date_format",
+          "column": "eventDetails_transactionDatetime",
+          "format": "YYYY-MM-dd'T'HH:mm:ss.SSSSSSSSS",
+          "new_format": "YYYY-MM-dd'T'HH:mm:ss.SSSSSSSSS"
+        },
+        {
+          "delete_input": false,
+          "transform": "copy_attribute",
+          "input_column": "eventDetails_transactionDatetime",
+          "output_column": "transactionDatetime"
+        },
+        {
+          "transform": "concatenation",
+          "fields": [
+            "OUTPUT1",
+            "OUTPUT2"
+          ],
+          "output_column": "paymentType"
+        },
+        {
+          "transform": "regex_sub",
+          "column": "paymentType",
+          "pattern": "(\\.{2})|({2})",
+          "replacement": "\\\\"
+        },
+        {
+          "transform": "switch_case",
+          "input_column": "paymentType",
+          "switch": {
+            "": "Payment"
+          },
+          "output_column": "paymentType"
+        },
+        {
+          "enrichments": [
+            {
+              "value_column": "guuid",
+              "column": "internetBankingCustomerId"
+            },
+            {
+              "value_column": "salutation",
+              "column": "SALUTATION"
+            },
+            {
+              "value_column": "last_name",
+              "column": "LAST_NAME"
+            },
+            {
+              "value_column": "phone_number",
+              "column": "primaryMobile"
+            },
+            {
+              "value_column": "email_addr",
+              "column": "primaryEmail"
+            }
+          ],
+          "where_columns": [
+            {
+              "column": "cust_id_num",
+              "mapping_column": "customerId"
+            }
+          ],
+          "transform": "enrichCloudSQL",
+          "datasource": "use_reference_data",
+          "table": "cliom_expat_lookup",
+          "projections": [
+            "guuid",
+            "salutation",
+            "last_name",
+            "phone_number",
+            "email_addr"
+          ]
+        },
+        {
+          "enrichments": [
+            {
+              "column": "emailLanguage",
+              "value": "en_GB"
+            }
+          ],
+          "transform": "addStaticData"
+        },
+        {
+          "enrichments": [
+            {
+              "column": "smsLanguage",
+              "value": "en_GB"
+            }
+          ],
+          "transform": "addStaticData"
+        },
+        {
+          "enrichments": [
+            {
+              "column": "SourceSubName",
+              "value": "esp-uae-nongmdebit-hub-ddtoing-sub"
+            }
+          ],
+          "transform": "addStaticData"
+        },
+        {
+          "transform": "addHashGuid",
+          "output_column": "PAYLOAD_UUID",
+          "input_columns": [
+            "eventHeader_eventIdentifier",
+            "transactionID",
+            "transactionDatetime",
+            "transactionAccount",
+            "customerId",
+            "paymentType",
+            "internetBankingCustomerId",
+            "SALUTATION",
+            "LAST_NAME",
+            "primaryMobile",
+            "primaryEmail"
+          ]
+        },
+        {
+          "transform": "post_filter",
+          "rule": "not PAYLOAD_UUID == ''"
+        },
+        {
+          "projection_type": "includes",
+          "transform": "projection",
+          "key_size": "payeeNameMissing",
+          "columns": [
+            "PAYLOAD_UUID",
+            "REC_TIMESTAMP",
+            "country_code",
+            "transactionID",
+            "transactionDatetime",
+            "transactionType",
+            "transactionAccount",
+            "transactionCurrency",
+            "transactionAmount",
+            "customerId",
+            "payeeName",
+            "paymentType",
+            "internetBankingCustomerId",
+            "SALUTATION",
+            "LAST_NAME",
+            "primaryMobile",
+            "primaryEmail",
+            "emailLanguage",
+            "narrative4",
+            "smsLanguage"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action": "PUSH TO TOPIC",
+          "topic": "esp-hdpv2-cdcd-topic"
+        }
+      ],
+      "filters": {
+        "transactionType@nongmdebit": "eventDetails_transactionType == 'DR'",
+        "forwardedIndicator@nongmdebit": "eventDetails_forwardedIndicator == 'N'"
+      },
+      "jointSplit_logic": {
+        "split@nongmdebit": {
+          "datasource": "use_reference_data",
+          "table": "cliom_expat_lookup",
+          "where_columns": [
+            {
+              "column": "related_cust_id_num",
+              "mapping_column": "eventDetails_accountCustomer"
+            }
+          ],
+          "select_column": "cust_id_num",
+          "enrichments": [
+            {
+              "split_column": "eventDetails_accountCustomer",
+              "value_column": "cust_id_num"
+            }
+          ],
+          "default": ""
+        }
+      },
+      "project_id": "hsbc-11393281-ihubucdl-dev",
+      "project_prefix": "hsbc-11393281-ihubucdl"
+    }
+  ]
+}
